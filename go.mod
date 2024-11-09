@@ -3,8 +3,10 @@ module github.com/tittuvarghese/core
 go 1.23.0
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
+	golang.org/x/crypto v0.21.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12
 )

@@ -97,10 +97,11 @@ func (handler *RelationalDB) QueryByCondition(model interface{}, condition map[s
 	var results []interface{}
 
 	// Perform the query with conditions
-	if err := handler.Instance.Where(condition).Find(&results).Error; err != nil {
+	if err := handler.Instance.Where(condition).Find(model).Error; err != nil {
 		return nil, err
 	}
 
-	// Return the results (already populated by Find)
+	// Cast model to slice of interface{}
+	results = append(results, model)
 	return results, nil
 }

@@ -65,7 +65,7 @@ func validateJWT(tokenString string) (*Claims, error) {
 	}
 }
 
-// Middleware to verify JWT token and extract claims
+// Authorize to verify JWT token and extract claims
 func Authorize() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get token from the Authorization header
@@ -100,4 +100,26 @@ func Authorize() gin.HandlerFunc {
 		// Proceed with the next handler
 		c.Next()
 	}
+}
+
+func GetClaims(c *gin.Context) (*Claims, error) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		return nil, fmt.Errorf("authorization header missing")
+	}
+
+	// Bearer <token>
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		return nil, fmt.Errorf("invalid authorization format")
+	}
+	tokenString := parts[1]
+	// Parse and validate the token
+	claims, err := validateJWT(tokenString)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return claims, err
 }

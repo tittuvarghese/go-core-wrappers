@@ -1,9 +1,12 @@
 package storage
 
 import (
+	"github.com/tittuvarghese/core/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
+
+var log = logger.NewLogger("storage-engine")
 
 type Storage interface {
 	Open() error
@@ -16,9 +19,29 @@ type Storage interface {
 	QueryByCondition(model interface{}, condition map[string]interface{}) ([]interface{}, error)
 }
 
+const CreateCommand = "create"
+const UpsertCommand = "upsert"
+const UpdateCommand = "update"
+
 type RelationalDB struct {
 	Connection string
 	Instance   *gorm.DB
+}
+
+type Operation struct {
+	Command   string
+	Model     interface{}
+	Condition interface{}
+	Expr      Expr // Required only for update operations
+}
+
+type Expr struct {
+	Column string
+	Value  interface{}
+}
+
+type AtomicTransaction struct {
+	Operations []Operation
 }
 
 // Initialize the database connection
@@ -104,4 +127,33 @@ func (handler *RelationalDB) QueryByCondition(model interface{}, condition map[s
 	// Cast model to slice of interface{}
 	results = append(results, model)
 	return results, nil
+}
+
+func (handler *RelationalDB) Transaction(ops AtomicTransaction) error {
+	tx := handler.Instance.Begin()
+	for _, record := range ops.Operations {
+		switch record.Command {
+		case CreateCommand:
+			if err := tx.Create(record.Model).Error; err != nil {
+				log.Error("Failed to perform create", err)
+				tx.Rollback()
+				return err
+			}
+		case UpsertCommand:
+			if err := tx.Save(record).Error; err != nil {
+				log.Error("Failed to perform upsert", err)
+				tx.Rollback()
+				return err
+			}
+		case UpdateCommand:
+			if err := tx.Model(record.Model).
+				Where(record.Condition).
+				Update(record.Expr.Column, record.Expr.Value).Error; err != nil {
+				log.Error("Failed to perform update operation", err)
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+	return tx.Commit().Error
 }

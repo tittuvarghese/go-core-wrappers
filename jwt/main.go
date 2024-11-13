@@ -17,9 +17,9 @@ type Claims struct {
 }
 
 // Generate generates a new JWT token
-func Generate(payload interface{}, issuer string) (string, error) {
+func Generate(payload interface{}, issuer string, expiry time.Duration) (string, error) {
 	// Set expiration time
-	expirationTime := time.Now().Add(24 * time.Hour)
+	expirationTime := time.Now().Add(expiry * time.Hour)
 
 	claims := Claims{
 		Data: payload,

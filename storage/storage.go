@@ -118,11 +118,16 @@ func (handler *RelationalDB) QueryAll(model interface{}) ([]interface{}, error) 
 }
 
 // QueryByCondition retrieves records based on dynamic conditions (like a WHERE clause)
-func (handler *RelationalDB) QueryByCondition(model interface{}, condition map[string]interface{}) ([]interface{}, error) {
+func (handler *RelationalDB) QueryByCondition(model interface{}, condition map[string]interface{}, preload ...string) ([]interface{}, error) {
 	var results []interface{}
+	var queryBuilder = handler.Instance
+
+	for _, tableName := range preload {
+		queryBuilder = queryBuilder.Preload(tableName)
+	}
 
 	// Perform the query with conditions
-	if err := handler.Instance.Where(condition).Find(model).Error; err != nil {
+	if err := queryBuilder.Where(condition).Find(model).Error; err != nil {
 		return nil, err
 	}
 

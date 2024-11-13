@@ -4,6 +4,7 @@ import (
 	"github.com/tittuvarghese/core/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var log = logger.NewLogger("storage-engine")
@@ -22,6 +23,7 @@ type Storage interface {
 const CreateCommand = "create"
 const UpsertCommand = "upsert"
 const UpdateCommand = "update"
+const DeleteCommand = "delete"
 
 type RelationalDB struct {
 	Connection string
@@ -129,6 +131,10 @@ func (handler *RelationalDB) QueryByCondition(model interface{}, condition map[s
 	return results, nil
 }
 
+func (handler *RelationalDB) BuildExpr(column string, args ...interface{}) clause.Expr {
+	return gorm.Expr(column, args)
+}
+
 func (handler *RelationalDB) Transaction(ops AtomicTransaction) error {
 	tx := handler.Instance.Begin()
 	for _, record := range ops.Operations {
@@ -150,6 +156,12 @@ func (handler *RelationalDB) Transaction(ops AtomicTransaction) error {
 				Where(record.Condition).
 				Update(record.Expr.Column, record.Expr.Value).Error; err != nil {
 				log.Error("Failed to perform update operation", err)
+				tx.Rollback()
+				return err
+			}
+		case DeleteCommand:
+			if err := tx.Delete(record.Model).Error; err != nil {
+				log.Error("Failed to perform delete operation", err)
 				tx.Rollback()
 				return err
 			}

@@ -1,9 +1,13 @@
 package storage
 
 import (
+	"github.com/tittuvarghese/core/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
+
+var log = logger.NewLogger("storage-engine")
 
 type Storage interface {
 	Open() error
@@ -16,9 +20,30 @@ type Storage interface {
 	QueryByCondition(model interface{}, condition map[string]interface{}) ([]interface{}, error)
 }
 
+const CreateCommand = "create"
+const UpsertCommand = "upsert"
+const UpdateCommand = "update"
+const DeleteCommand = "delete"
+
 type RelationalDB struct {
 	Connection string
 	Instance   *gorm.DB
+}
+
+type Operation struct {
+	Command   string
+	Model     interface{}
+	Condition interface{}
+	Expr      Expr // Required only for update operations
+}
+
+type Expr struct {
+	Column string
+	Value  interface{}
+}
+
+type AtomicTransaction struct {
+	Operations []Operation
 }
 
 // Initialize the database connection
@@ -93,14 +118,59 @@ func (handler *RelationalDB) QueryAll(model interface{}) ([]interface{}, error) 
 }
 
 // QueryByCondition retrieves records based on dynamic conditions (like a WHERE clause)
-func (handler *RelationalDB) QueryByCondition(model interface{}, condition map[string]interface{}) ([]interface{}, error) {
+func (handler *RelationalDB) QueryByCondition(model interface{}, condition map[string]interface{}, preload ...string) ([]interface{}, error) {
 	var results []interface{}
+	var queryBuilder = handler.Instance
+
+	for _, tableName := range preload {
+		queryBuilder = queryBuilder.Preload(tableName)
+	}
 
 	// Perform the query with conditions
-	if err := handler.Instance.Where(condition).Find(&results).Error; err != nil {
+	if err := queryBuilder.Where(condition).Find(model).Error; err != nil {
 		return nil, err
 	}
 
-	// Return the results (already populated by Find)
+	// Cast model to slice of interface{}
+	results = append(results, model)
 	return results, nil
+}
+
+func (handler *RelationalDB) BuildExpr(column string, args ...interface{}) clause.Expr {
+	return gorm.Expr(column, args)
+}
+
+func (handler *RelationalDB) Transaction(ops AtomicTransaction) error {
+	tx := handler.Instance.Begin()
+	for _, record := range ops.Operations {
+		switch record.Command {
+		case CreateCommand:
+			if err := tx.Create(record.Model).Error; err != nil {
+				log.Error("Failed to perform create", err)
+				tx.Rollback()
+				return err
+			}
+		case UpsertCommand:
+			if err := tx.Save(record).Error; err != nil {
+				log.Error("Failed to perform upsert", err)
+				tx.Rollback()
+				return err
+			}
+		case UpdateCommand:
+			if err := tx.Model(record.Model).
+				Where(record.Condition).
+				Update(record.Expr.Column, record.Expr.Value).Error; err != nil {
+				log.Error("Failed to perform update operation", err)
+				tx.Rollback()
+				return err
+			}
+		case DeleteCommand:
+			if err := tx.Delete(record.Model).Error; err != nil {
+				log.Error("Failed to perform delete operation", err)
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+	return tx.Commit().Error
 }

@@ -15,3 +15,5 @@ const (
 	DebugLevel = "debug"
 	TraceLevel = "trace"
 )
+
+const JwtSecretKey = "17dc855f459f71a6df1aa73e253d258eceb9151e9ccce4b132dd21b7da3f"

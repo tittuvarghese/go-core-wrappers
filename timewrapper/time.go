@@ -1,7 +1,7 @@
 package timewrapper
 
 import (
-	"github.com/tittuvarghese/core/constants"
+	"github.com/tittuvarghese/ss-go-core/constants"
 	"time"
 )
 

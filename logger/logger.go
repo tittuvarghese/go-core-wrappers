@@ -3,8 +3,8 @@ package logger
 import (
 	"context"
 	"fmt"
-	"github.com/tittuvarghese/core/constants"
-	"github.com/tittuvarghese/core/timewrapper"
+	"github.com/tittuvarghese/ss-go-core/constants"
+	"github.com/tittuvarghese/ss-go-core/timewrapper"
 	"os"
 	"path/filepath"
 	"time"

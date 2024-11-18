@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/tittuvarghese/core/logger"
+	"github.com/tittuvarghese/ss-go-core/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

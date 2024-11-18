@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/spf13/viper"
-	"github.com/tittuvarghese/core/logger"
+	"github.com/tittuvarghese/ss-go-core/logger"
 )
 
 const DEFAULT_CONFIG_PATH = ".env"
@@ -31,4 +31,8 @@ func (conf *Config) Enable() {
 }
 func (conf *Config) GetString(key string) string {
 	return viper.GetString(key)
+}
+
+func (conf *Config) GetBool(key string) bool {
+	return viper.GetBool(key)
 }

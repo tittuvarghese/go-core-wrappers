@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/tittuvarghese/go-core-wrappers/constants"
 	"strings"
 	"time"
 )
 
-var jwtSecretKey = []byte(constants.JwtSecretKey)
+var jwtSecretKey []byte
 
 type Claims struct {
 	Data interface{} `json:"data"`
@@ -17,7 +16,7 @@ type Claims struct {
 }
 
 // Generate generates a new JWT token
-func Generate(payload interface{}, issuer string, expiry time.Duration) (string, error) {
+func Generate(payload interface{}, issuer string, expiry time.Duration, secretKey string) (string, error) {
 	// Set expiration time
 	expirationTime := time.Now().Add(expiry * time.Hour)
 
@@ -31,6 +30,8 @@ func Generate(payload interface{}, issuer string, expiry time.Duration) (string,
 
 	// Create the token with the claims and sign it with the secret key
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	jwtSecretKey = []byte(secretKey)
 
 	// Sign the token and return the signed string
 	tokenString, err := token.SignedString(jwtSecretKey)

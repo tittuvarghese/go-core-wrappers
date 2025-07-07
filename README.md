@@ -20,5 +20,5 @@ The Go Core Library provides a set of foundational components designed for use i
 To install the Go Core Library, run the following command:
 
 ```bash
-go get github.com/tittuvarghese/ss-go-core
+go get github.com/tittuvarghese/go-core-wrappers
 

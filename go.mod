@@ -1,4 +1,4 @@
-module github.com/tittuvarghese/ss-go-core
+module github.com/tittuvarghese/go-core-wrappers
 
 go 1.23.0
 

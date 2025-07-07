@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/spf13/viper"
-	"github.com/tittuvarghese/ss-go-core/logger"
+	"github.com/tittuvarghese/go-core-wrappers/logger"
 )
 
 const DEFAULT_CONFIG_PATH = ".env"

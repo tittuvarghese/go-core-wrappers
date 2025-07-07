@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/tittuvarghese/ss-go-core/constants"
+	"github.com/tittuvarghese/go-core-wrappers/constants"
 	"strings"
 	"time"
 )
